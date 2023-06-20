@@ -1,0 +1,37 @@
+import librosa
+import soundfile as sf
+import numpy as np
+import random
+
+audio_file = 'kiminopasu/wositeisite.mp3' #ここにファイルのパスを指定
+output_file = 'test.wav'
+
+target_deletion_percentage = float(input("削除する割合（％）を入力してください: "))
+target_deletion_seconds = float(input("削除するための秒数を入力してください: "))
+
+data, sr = librosa.load(audio_file, sr=None)
+
+total_samples = len(data)
+target_deletion_samples = int(total_samples * target_deletion_percentage / 100)
+current_deletion_samples = 0
+original_total_samples = total_samples
+while current_deletion_samples < target_deletion_samples:
+    deletion_seconds = min(target_deletion_seconds, 1.0)  # 削除する秒数を制限します
+    deletion_samples = int(deletion_seconds * sr)
+
+    start_sample = random.randint(0, total_samples - deletion_samples - 1)
+    end_sample = start_sample + deletion_samples
+
+    data = np.concatenate((data[:start_sample], data[end_sample:]))
+
+    current_deletion_samples += deletion_samples
+
+    total_samples = len(data)
+
+sf.write(output_file, data, sr)
+
+duration_before_deletion = original_total_samples / sr
+duration_after_deletion = len(data) / sr
+
+print(f"削除前の音声の長さ: {duration_before_deletion}秒")
+print(f"削除後の音声の長さ: {duration_after_deletion}秒")
