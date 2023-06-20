@@ -2,8 +2,14 @@ import librosa
 import soundfile as sf
 import numpy as np
 import random
+import os
 
-audio_file = 'kiminopasu/wositeisite.mp3' #ここにファイルのパスを指定
+directory ='kokoni/jibunno/pasuwositei'　#ここに自分の素材があるファイルのパスを指定する
+files = [file for file in os.listdir(directory) if file.endswith(".mp3")]
+selected_file = random.choice(files)
+audio_file = os.path.join(directory, random.choice(files))
+selected_file = random.choice(files)
+
 output_file = 'test.wav'
 
 target_deletion_percentage = float(input("削除する割合（％）を入力してください: "))
@@ -27,6 +33,7 @@ while current_deletion_samples < target_deletion_samples:
     current_deletion_samples += deletion_samples
 
     total_samples = len(data)
+print(f"選択したファイル名: {os.path.basename(audio_file)}")
 
 sf.write(output_file, data, sr)
 
