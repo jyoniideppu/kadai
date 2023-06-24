@@ -43,16 +43,16 @@ def process_audio(audio_file):
 
     return original_total_samples, duration_before_deletion, duration_after_deletion
 
-def write_to_csv(filename, count, spaces_pressed, audio_file, duration_before, duration_after):
+def write_to_csv(filename, count, spaces_pressed, audio_file, duration_before, duration_after, input_text):
     with open(filename, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([count, spaces_pressed, audio_file, duration_before, duration_after])
+        writer.writerow([count, spaces_pressed, audio_file, duration_before, duration_after, input_text])
 
 count = 1
 input_text = ''
 output_csv = 'results.csv'
 
-for audio_file in random.sample(files, 10):
+for audio_file in random.sample(files, 2):
     original_total_samples, duration_before, duration_after = process_audio(os.path.join(directory, audio_file))
 
     spaces_pressed = 0
@@ -73,5 +73,5 @@ for audio_file in random.sample(files, 10):
     print("文字を入力してください。")
     input_text = input()
 
-    write_to_csv(output_csv, count, spaces_pressed, audio_file_name, duration_before, duration_after)
+    write_to_csv(output_csv, count, spaces_pressed, audio_file_name, duration_before, duration_after, input_text)
     count += 1
