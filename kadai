@@ -3,42 +3,75 @@ import soundfile as sf
 import numpy as np
 import random
 import os
+import csv
+import msvcrt
+import wave
+import winsound
 
-directory ='kokoni/jibunno/pasuwositei'　#ここに自分の素材があるファイルのパスを指定する
+directory = 'C:/Users/asupa/Downloads/onseinosozaiyou'
 files = [file for file in os.listdir(directory) if file.endswith(".mp3")]
-selected_file = random.choice(files)
-audio_file = os.path.join(directory, random.choice(files))
-selected_file = random.choice(files)
-
 output_file = 'test.wav'
 
 target_deletion_percentage = float(input("削除する割合（％）を入力してください: "))
 target_deletion_seconds = float(input("削除するための秒数を入力してください: "))
 
-data, sr = librosa.load(audio_file, sr=None)
-
-total_samples = len(data)
-target_deletion_samples = int(total_samples * target_deletion_percentage / 100)
-current_deletion_samples = 0
-original_total_samples = total_samples
-while current_deletion_samples < target_deletion_samples:
-    deletion_seconds = min(target_deletion_seconds, 1.0)  # 削除する秒数を制限します
-    deletion_samples = int(deletion_seconds * sr)
-
-    start_sample = random.randint(0, total_samples - deletion_samples - 1)
-    end_sample = start_sample + deletion_samples
-
-    data = np.concatenate((data[:start_sample], data[end_sample:]))
-
-    current_deletion_samples += deletion_samples
+def process_audio(audio_file):
+    data, sr = librosa.load(audio_file, sr=None)
 
     total_samples = len(data)
-print(f"選択したファイル名: {os.path.basename(audio_file)}")
+    target_deletion_samples = int(total_samples * target_deletion_percentage / 100)
+    current_deletion_samples = 0
+    original_total_samples = total_samples
 
-sf.write(output_file, data, sr)
+    while current_deletion_samples < target_deletion_samples:
+        deletion_seconds = min(target_deletion_seconds, 1.0)  # 削除する秒数を制限します
+        deletion_samples = int(deletion_seconds * sr)
 
-duration_before_deletion = original_total_samples / sr
-duration_after_deletion = len(data) / sr
+        start_sample = random.randint(0, total_samples - deletion_samples - 1)
+        end_sample = start_sample + deletion_samples
 
-print(f"削除前の音声の長さ: {duration_before_deletion}秒")
-print(f"削除後の音声の長さ: {duration_after_deletion}秒")
+        data = np.concatenate((data[:start_sample], data[end_sample:]))
+
+        current_deletion_samples += deletion_samples
+
+        total_samples = len(data)
+
+    sf.write(output_file, data, sr)
+
+    duration_before_deletion = original_total_samples / sr
+    duration_after_deletion = len(data) / sr
+
+    return original_total_samples, duration_before_deletion, duration_after_deletion
+
+def write_to_csv(filename, count, spaces_pressed, audio_file, duration_before, duration_after):
+    with open(filename, 'a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([count, spaces_pressed, audio_file, duration_before, duration_after])
+
+count = 1
+input_text = ''
+output_csv = 'results.csv'
+
+for audio_file in random.sample(files, 10):
+    original_total_samples, duration_before, duration_after = process_audio(os.path.join(directory, audio_file))
+
+    spaces_pressed = 0
+    audio_file_name = os.path.basename(audio_file)
+
+    while True:
+        print("音声を再生するにはスペースキーを押してください。")
+        key = msvcrt.getwch()
+        if key == ' ' or key == '　':
+            spaces_pressed += 1
+            # 音声を再生する方法（Windows環境向け）
+            winsound.PlaySound(output_file, winsound.SND_FILENAME)
+            print("もう一度再生しますか？ スペースキーを押してください。")
+            key = msvcrt.getwch()
+            if key != ' ' and key != '　':
+                break
+
+    print("文字を入力してください。")
+    input_text = input()
+
+    write_to_csv(output_csv, count, spaces_pressed, audio_file_name, duration_before, duration_after)
+    count += 1
