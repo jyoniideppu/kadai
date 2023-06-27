@@ -10,10 +10,11 @@ import winsound
 
 directory = 'C:/Users/asupa/Downloads/onseinosozaiyou'
 files = [file for file in os.listdir(directory) if file.endswith(".mp3")]
-output_file = 'test.wav'
+output_directory = 'C:/Users/asupa/Downloads/henkanngo'  # 変換後の音声の出力ディレクトリ
 
 target_deletion_percentage = float(input("削除する割合（％）を入力してください: "))
 target_deletion_seconds = float(input("削除するための秒数を入力してください: "))
+output_count = int(input("書き出す音声の数を入力してください: "))
 
 def process_audio(audio_file):
     data, sr = librosa.load(audio_file, sr=None)
@@ -24,7 +25,7 @@ def process_audio(audio_file):
     original_total_samples = total_samples
 
     while current_deletion_samples < target_deletion_samples:
-        deletion_seconds = min(target_deletion_seconds, 1.0)  # 削除する秒数を制限します
+        deletion_seconds = min(target_deletion_seconds, 1.0)
         deletion_samples = int(deletion_seconds * sr)
 
         start_sample = random.randint(0, total_samples - deletion_samples - 1)
@@ -36,24 +37,27 @@ def process_audio(audio_file):
 
         total_samples = len(data)
 
-    sf.write(output_file, data, sr)
+    output_filename = os.path.splitext(os.path.basename(audio_file))[0] + "_converted.wav"
+    output_path = os.path.join(output_directory, output_filename)
+
+    sf.write(output_path, data, sr)
 
     duration_before_deletion = original_total_samples / sr
     duration_after_deletion = len(data) / sr
 
-    return original_total_samples, duration_before_deletion, duration_after_deletion
+    return output_path, duration_before_deletion, duration_after_deletion
 
-def write_to_csv(filename, count, spaces_pressed, audio_file, duration_before, duration_after, input_text):
+def write_to_csv(filename, count, spaces_pressed, audio_file, duration_before, duration_after, converted_audio_file, input_text):
     with open(filename, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([count, spaces_pressed, audio_file, duration_before, duration_after, input_text])
+        writer.writerow([count, spaces_pressed, audio_file, duration_before, duration_after, converted_audio_file, input_text])
 
 count = 1
 input_text = ''
 output_csv = 'results.csv'
 
-for audio_file in random.sample(files, 2):
-    original_total_samples, duration_before, duration_after = process_audio(os.path.join(directory, audio_file))
+for audio_file in random.sample(files, min(output_count, len(files))):
+    converted_audio_file, duration_before, duration_after = process_audio(os.path.join(directory, audio_file))
 
     spaces_pressed = 0
     audio_file_name = os.path.basename(audio_file)
@@ -63,8 +67,7 @@ for audio_file in random.sample(files, 2):
         key = msvcrt.getwch()
         if key == ' ' or key == '　':
             spaces_pressed += 1
-            # 音声を再生する方法（Windows環境向け）
-            winsound.PlaySound(output_file, winsound.SND_FILENAME)
+            winsound.PlaySound(converted_audio_file, winsound.SND_FILENAME)
             print("もう一度再生しますか？ スペースキーを押してください。")
             key = msvcrt.getwch()
             if key != ' ' and key != '　':
@@ -73,5 +76,5 @@ for audio_file in random.sample(files, 2):
     print("文字を入力してください。")
     input_text = input()
 
-    write_to_csv(output_csv, count, spaces_pressed, audio_file_name, duration_before, duration_after, input_text)
+    write_to_csv(output_csv, count, spaces_pressed, audio_file_name, duration_before, duration_after, converted_audio_file, input_text)
     count += 1
