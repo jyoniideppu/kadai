@@ -48,10 +48,10 @@ def process_audio(audio_file):
     duration_before_deletion = original_total_samples / sr
     duration_after_deletion = len(data) / sr
 
-    return output_path, duration_before_deletion, duration_after_deletion
+    return output_path, duration_before_deletion, duration_after_deletion, original_total_samples, len(data)
 
-def write_to_csv(writer, count, spaces_pressed, audio_file, duration_before, duration_after, converted_audio_file, input_text):
-    writer.writerow([count, spaces_pressed, audio_file, duration_before, duration_after, converted_audio_file, input_text])
+def write_to_csv(writer, count, spaces_pressed, audio_file, duration_before, duration_after, converted_audio_file, input_text, total_silence_before, total_silence_after):
+    writer.writerow([count, spaces_pressed, audio_file, duration_before, duration_after, converted_audio_file, input_text, total_silence_before / sr, total_silence_after / sr])
 
 count = 1
 input_text = ''
@@ -59,10 +59,10 @@ input_text = ''
 with open(output_csv, 'a', newline='', encoding='shift_jis') as csvfile:
     writer = csv.writer(csvfile)
     if csvfile.tell() == 0:
-        writer.writerow(['Count', 'Spaces Pressed', 'Audio File', 'Duration Before', 'Duration After', 'Converted Audio File', 'Input Text'])
-
+        writer.writerow(['Count', 'Spaces Pressed', 'Audio File', 'Duration Before', 'Duration After', 'Converted Audio File', 'Input Text', 'Total Silence Before (s)', 'Total Silence After (s)'])
+    sr = 44100  
     for audio_file in random.sample(files, min(output_count, len(files))):
-        converted_audio_file, duration_before, duration_after = process_audio(os.path.join(directory, audio_file))
+        converted_audio_file, duration_before, duration_after, total_silence_before, total_silence_after = process_audio(os.path.join(directory, audio_file))
         
         spaces_pressed = 0
         audio_file_name = os.path.basename(audio_file)
@@ -81,12 +81,5 @@ with open(output_csv, 'a', newline='', encoding='shift_jis') as csvfile:
         print("文字を入力してください。")
         input_text = input()
 
-        write_to_csv(writer, count, spaces_pressed, os.path.join(directory, audio_file), duration_before, duration_after, converted_audio_file, input_text)
+        write_to_csv(writer, count, spaces_pressed, os.path.join(directory, audio_file), duration_before, duration_after, converted_audio_file, input_text, total_silence_before, total_silence_after)
         count += 1
-
-
-# Copyright (c) 2013--2023, librosa development team.
-
-Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
